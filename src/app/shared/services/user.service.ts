@@ -7,9 +7,9 @@ import { IUserRes } from '../types/user.type';
 class UserService {
     getUsers(
         params?: IBaseRequestParams
-    ) : Promise<AxiosResponse<BaseResponse<IUserRes>>> {
-        return http.get('/admin/user', { params })
-      }
+    ): Promise<AxiosResponse<BaseResponse<IUserRes>>> {
+        return http.get('/api/admin/users', { params })
+    }
 }
 
 const userService = new UserService

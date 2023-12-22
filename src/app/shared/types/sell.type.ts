@@ -7,7 +7,7 @@ export interface ISell {
     billUrl: string
     createAt: string
 }
-export interface IPurchaseRes {
+export interface ISellRes {
     rows: ISell[]
     count: number
 }

@@ -1,10 +1,38 @@
-import { Button, Table } from 'antd';
-import { IAccount } from '../shared/types/account.type';
-import userService from '../shared/services/user.service';
+import { Button, Table, Modal } from 'antd';
+import { IAccountRes } from '../shared/types/account.type';
 import { ColumnsType } from 'antd/es/table'
+import { useQuery } from '@tanstack/react-query';
+import accountService from '../shared/services/account.service';
+
 
 const AccountManagement = () => {
-    const columns: ColumnsType<IAccount> = [
+    const { data, isLoading, isError } = useQuery<any>({
+        queryKey: ['adminaccounts'],
+        queryFn: async () => {
+            try {
+                const data = await accountService.getAccounts()
+                return data
+            } catch (error) {
+
+            }
+        }
+
+    })
+
+
+    const deleteAccount = (id: any) => {
+        Modal.error({
+            title: 'Bạn có chắc muốn xoá tài khoản này khỏi hệ thống?',
+            content: 'Hành động này sẽ xoá vĩnh viễn tài khoản khỏi hệ thống và sẽ không thể khôi phục lại.',
+            okType: 'danger',
+            okText: 'Xoá',
+            onOk: () => {
+                console.log(id)
+            }
+        });
+    };
+
+    const columns: ColumnsType<any> = [
         {
             title: 'ID',
             dataIndex: 'id',
@@ -42,32 +70,40 @@ const AccountManagement = () => {
             align: 'center',
         },
         {
+            title: 'Giá',
+            dataIndex: 'price',
+            key: 'price',
+            align: 'center',
+        },
+        {
             title: 'Hành động',
             key: 'action',
             align: 'center',
-            render: () => <Button danger>Xóa tài khoản</Button>,
+            render: (_, record) => <Button onClick={() => deleteAccount(record.id)} danger>Xóa tài khoản</Button>,
         }
     ];
-
-    const dataSource: IAccount[] = []
 
     //hook
 
     return (
         <>
             <div className='container mx-auto mt-4'>
-                <Table
-                    dataSource={dataSource}
-                    columns={columns}
-                    bordered
-                    pagination={{
-                        defaultCurrent: 1,
-                        pageSize: 10,
-                        position: ['bottomCenter'],
-                        total: 50 || 1   //count
-                        // current: page,
-                    }}
-                />
+                {isLoading && <p>Loading...</p>}
+                {isError && <p>Error loading data</p>}
+                {!isLoading && !isError && (
+                    <Table
+                        dataSource={data?.data?.data.map((account: any) => ({ ...account, key: account.id })) || []}
+                        columns={columns}
+                        bordered
+                        pagination={{
+                            defaultCurrent: 1,
+                            pageSize: 10,
+                            position: ['bottomCenter'],
+                            total: data.data.count   //count
+                            // current: page,
+                        }}
+                    />
+                )}
             </div>
         </>
     )

@@ -35,7 +35,6 @@ export default function Home() {
   const [current, setCurrent] = useState('user management');
 
   const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
     setCurrent(e.key);
   };
 

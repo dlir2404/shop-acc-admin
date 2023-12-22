@@ -1,9 +1,9 @@
 export interface IUser {
-    id: number
-    username: string
-    createAt: string
-  }
-  export interface IUserRes {
-    rows: IUser[]
-    count: number
-  }
+  id: number
+  username: string
+  createAt: string
+}
+export interface IUserRes {
+  count: number,
+  data: IUser[]
+}
