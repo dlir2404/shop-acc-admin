@@ -1,13 +1,16 @@
-import { Button, Table, Image, Modal } from 'antd';
+import { Button, Table, Image, Modal, message } from 'antd';
 import { IPurchase } from '../shared/types/purchase.type';
 import moment from 'moment';
 import { ColumnsType } from 'antd/es/table'
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import purchaseService from '../shared/services/purchase.service';
 
 
 const PurchaseManagement = () => {
 
+    const queryClient = useQueryClient()
+
+    //api
     const { data, isLoading, isError } = useQuery<any>({
         queryKey: ['adminaccounts'],
         queryFn: async () => {
@@ -21,6 +24,36 @@ const PurchaseManagement = () => {
 
     })
 
+    const acceptRequestMutation = useMutation({
+        mutationFn: async (id: any) => {
+            const response = await purchaseService.acceptPurchase(id)
+            return response
+        },
+        onSuccess(data, variables, context) {
+            message.success('Chấp nhận yêu cầu mua tài khoản thành công.')
+            queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+        },
+        onError(error, variables, context) {
+            console.log(error)
+            message.error('Có lỗi xảy ra.')
+        },
+    })
+
+    const denyRequestMutation = useMutation({
+        mutationFn: async (id: any) => {
+            const response = await purchaseService.denyPurchase(id)
+            return response
+        },
+        onSuccess(data, variables, context) {
+            message.success('Đã từ chối yêu cầu.')
+            queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+        },
+        onError(error, variables, context) {
+            console.log(error)
+            message.error('Có lỗi xảy ra.')
+        },
+    })
+
     const confirmPurchase = (id: any) => {
         Modal.confirm({
             title: 'Bạn có chắc muốn chấp nhận yêu cầu mua này?',
@@ -28,7 +61,7 @@ const PurchaseManagement = () => {
             okType: 'primary',
             okText: 'Chấp nhận',
             onOk: () => {
-                console.log(id)
+                acceptRequestMutation.mutate(id)
             }
         })
     }
@@ -40,7 +73,7 @@ const PurchaseManagement = () => {
             okType: 'danger',
             okText: 'Từ chối',
             onOk: () => {
-                console.log(id)
+                denyRequestMutation.mutate(id)
             }
         })
     }
