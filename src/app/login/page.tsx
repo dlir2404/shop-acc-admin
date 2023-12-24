@@ -16,9 +16,9 @@ const Login = () => {
             message.success('Đăng nhập thành công')
             router.push('/')
         },
-        onError(error, variables, context) {
+        onError(error: any) {
             console.log(error)
-            message.error('Có lỗi')
+            message.error(error.response.data.message)
         },
     })
 

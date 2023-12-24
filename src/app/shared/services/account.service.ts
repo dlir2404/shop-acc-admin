@@ -12,11 +12,11 @@ class AccountService {
     }
 
     addAccount = async (values: IAccount) => {
-        return http.post('api/admin/')
+        return http.post('api/admin/accounts/add-account/')
     }
 
-    deleteAccount = async () => {
-        return 'a'
+    deleteAccount = async (id: any) => {
+        return http.delete('api/admin/accounts/del-account/' + id)
     }
 }
 
