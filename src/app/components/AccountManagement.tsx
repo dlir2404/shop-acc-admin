@@ -1,11 +1,13 @@
 import { Button, Table, Modal } from 'antd';
 import { IAccountRes } from '../shared/types/account.type';
 import { ColumnsType } from 'antd/es/table'
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import accountService from '../shared/services/account.service';
 
 
 const AccountManagement = () => {
+
+    //api
     const { data, isLoading, isError } = useQuery<any>({
         queryKey: ['adminaccounts'],
         queryFn: async () => {
@@ -17,6 +19,10 @@ const AccountManagement = () => {
             }
         }
 
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: () => accountService.deleteAccount()
     })
 
 

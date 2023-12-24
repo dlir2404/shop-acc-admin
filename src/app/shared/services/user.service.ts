@@ -10,6 +10,14 @@ class UserService {
     ): Promise<AxiosResponse<BaseResponse<IUserRes>>> {
         return http.get('/api/admin/users', { params })
     }
+
+    async lockUser(id: any) {
+        return http.post('/api/admin/users/lock/' + id)
+    }
+
+    async unlockUser(id: any) {
+        return http.post('/api/admin/users/unlock/' + id)
+    }
 }
 
 const userService = new UserService

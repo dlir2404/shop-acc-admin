@@ -2,7 +2,7 @@ import { Button, Table, Modal, message } from 'antd';
 import moment from 'moment';
 import userService from '../shared/services/user.service';
 import { ColumnsType } from 'antd/es/table'
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 const UserManagement = () => {
 
@@ -20,6 +20,28 @@ const UserManagement = () => {
 
     })
 
+    const lockUserMutation = useMutation({
+        mutationFn: async (id: any) => userService.lockUser(id),
+        onSuccess(data, variables, context) {
+            message.success('Đã khoá tài khoản.')
+        },
+        onError(error, variables, context) {
+            console.log(error)
+            message.error('Có lỗi.')
+        },
+    })
+
+    const unlockUserMutation = useMutation({
+        mutationFn: async (id: any) => userService.unlockUser(id),
+        onSuccess(data, variables, context) {
+            message.success('Đã mở khoá tài khoản.')
+        },
+        onError(error, variables, context) {
+            console.log(error)
+            message.error('Có lỗi.')
+        },
+    })
+
 
     //lock modal
     const lockUser = (id: any) => {
@@ -29,7 +51,19 @@ const UserManagement = () => {
             okType: 'danger',
             okText: 'Khoá',
             onOk: () => {
-                console.log(id)
+                lockUserMutation.mutate(id)
+            }
+        });
+    };
+
+    const unlockUser = (id: any) => {
+        Modal.error({
+            title: 'Bạn có chắc muốn mở khoá người dùng này?',
+            content: 'Tài khoản của người dùng này sẽ được mở khoá.',
+            okType: 'danger',
+            okText: 'Mở khoá',
+            onOk: () => {
+                unlockUserMutation.mutate(id)
             }
         });
     };
