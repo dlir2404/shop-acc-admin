@@ -12,7 +12,7 @@ const PurchaseManagement = () => {
 
     //api
     const { data, isLoading, isError } = useQuery<any>({
-        queryKey: ['adminaccounts'],
+        queryKey: ['adminpurchases'],
         queryFn: async () => {
             try {
                 const data = await purchaseService.getPurchases()
@@ -31,7 +31,7 @@ const PurchaseManagement = () => {
         },
         onSuccess(data, variables, context) {
             message.success('Chấp nhận yêu cầu mua tài khoản thành công.')
-            queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+            queryClient.invalidateQueries({ queryKey: ['adminpurchases'] })
         },
         onError(error, variables, context) {
             console.log(error)
@@ -46,7 +46,7 @@ const PurchaseManagement = () => {
         },
         onSuccess(data, variables, context) {
             message.success('Đã từ chối yêu cầu.')
-            queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+            queryClient.invalidateQueries({ queryKey: ['adminpurchases'] })
         },
         onError(error, variables, context) {
             console.log(error)
@@ -72,6 +72,8 @@ const PurchaseManagement = () => {
             content: 'Hành động này xác nhận rằng bạn chưa nhận được tiền từ người mua.',
             okType: 'danger',
             okText: 'Từ chối',
+            closable: true,
+            cancelText: 'Huỷ',
             onOk: () => {
                 denyRequestMutation.mutate(id)
             }
@@ -132,12 +134,18 @@ const PurchaseManagement = () => {
             title: 'Hành động',
             key: 'action',
             align: 'center',
-            render: (_, record) => (
-                <>
-                    <Button onClick={() => confirmPurchase(record.id)} className='mr-4'>Đồng ý</Button>
-                    <Button onClick={() => denyPurchase(record.id)} danger>Từ chối</Button>
-                </>
-            ),
+            render: (_, record) => {
+                if (record.status === 'Chờ xác nhận') {
+                    return (
+                        <>
+                            <Button onClick={() => confirmPurchase(record.id)} className='mr-4'>Đồng ý</Button>
+                            <Button onClick={() => denyPurchase(record.id)} danger>Từ chối</Button>
+                        </>
+                    )
+                } else {
+                    return ''
+                }
+            },
         }
     ];
 
@@ -148,17 +156,21 @@ const PurchaseManagement = () => {
     return (
         <>
             <div className='container mx-auto mt-4'>
-                <Table
-                    dataSource={data?.data?.data.map((purchase: any) => ({ ...purchase, key: purchase.id })) || []}
-                    columns={columns}
-                    bordered
-                    pagination={{
-                        defaultCurrent: 1,
-                        pageSize: 10,
-                        position: ['bottomCenter'],
-                        total: data?.data?.count || 1
-                    }}
-                />
+                {isLoading && <p>Loading...</p>}
+                {isError && <p>Error loading data</p>}
+                {!isLoading && !isError && (
+                    <Table
+                        dataSource={data?.data?.data.map((purchase: any) => ({ ...purchase, key: purchase.id })) || []}
+                        columns={columns}
+                        bordered
+                        pagination={{
+                            defaultCurrent: 1,
+                            pageSize: 10,
+                            position: ['bottomCenter'],
+                            total: data?.data?.count || 1
+                        }}
+                    />
+                )}
             </div>
         </>
     )

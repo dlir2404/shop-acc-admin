@@ -126,12 +126,6 @@ const AccountManagement = () => {
             align: 'center',
         },
         {
-            title: 'Số tướng',
-            dataIndex: 'heroes_num',
-            key: 'heroes_num',
-            align: 'center',
-        },
-        {
             title: 'Số trang phục',
             dataIndex: 'costumes_num',
             key: 'costumes_num',
@@ -236,7 +230,7 @@ const AccountManagement = () => {
                                 <Option value="Tinh Anh">Tinh Anh</Option>
                                 <Option value="Kim Cương">Kim Cương</Option>
                                 <Option value="Bạch kim">Bạch kim</Option>
-                                <Option value="Vàng">{'< '}Bạch kim</Option>
+                                <Option value="< Bạch kim">{'< '}Bạch kim</Option>
                             </Select>
                         </Form.Item>
                         <Form.Item label="Full tướng" name="is_full_gems" valuePropName="checked">

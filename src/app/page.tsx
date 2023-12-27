@@ -10,6 +10,7 @@ import PurchaseManagement from './components/PurchaseManagement';
 import { useRouter } from 'next/navigation';
 import { dataTagSymbol, useQuery } from '@tanstack/react-query';
 import localStorageService from './shared/services/localStorage.service';
+import SellManagement from './components/SellManagement';
 
 const Home = () => {
   const [current, setCurrent] = useState('user management');
@@ -78,6 +79,7 @@ const Home = () => {
       if (current === 'user management') return (<UserManagement />)
       else if (current === 'account management') return (<AccountManagement />)
       else if (current === 'purchase management') return (<PurchaseManagement />)
+      else if (current === 'sell management') return (<SellManagement />)
     }
 
     const handleLogout = () => {
