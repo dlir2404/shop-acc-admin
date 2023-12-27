@@ -1,5 +1,5 @@
 import { Button, Table, Modal, message } from 'antd';
-import { IAccount, IAccountRes } from '../shared/types/account.type';
+import { IAccount, IAccountRes, INewAccount } from '../shared/types/account.type';
 import { ColumnsType } from 'antd/es/table'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import accountService from '../shared/services/account.service';
@@ -13,6 +13,7 @@ import {
     Select,
     Upload,
 } from 'antd';
+import imgToUrl from '../shared/services/cloudinary.service';
 const { Option } = Select;
 
 
@@ -20,6 +21,7 @@ const AccountManagement = () => {
 
     const queryClient = useQueryClient()
     const [isModalAddOpen, setIsModalAddOpen] = useState(false)
+    const [loadings, setLoadings] = useState<boolean[]>([]);
 
 
     //api
@@ -50,9 +52,13 @@ const AccountManagement = () => {
     const addMutation = useMutation({
         mutationFn: (values: IAccount) => accountService.addAccount(values),
         onSuccess(data, variables, context) {
-            message.success('Đăng bài thành công')
+            message.success('Thêm tài khoản thành công')
             queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+            setIsModalAddOpen(false)
         },
+        onError(error: any) {
+            message.error(error.response.data.message)
+        }
     })
 
 
@@ -63,9 +69,35 @@ const AccountManagement = () => {
             okType: 'danger',
             okText: 'Xoá',
             onOk: () => {
-                console.log(id)
+                deleteMutation.mutate(id)
             }
         });
+    };
+
+    const handleAddAccount = async (values: any) => {
+        let image_url = ''
+        const { img, ...body } = values
+        if (img.file) {
+            image_url = await imgToUrl(img.file)
+        }
+        body.image_url = image_url
+        addMutation.mutate(body)
+    }
+
+    const enterLoading = (index: number) => {
+        setLoadings((prevLoadings) => {
+            const newLoadings = [...prevLoadings];
+            newLoadings[index] = true;
+            return newLoadings;
+        });
+
+        setTimeout(() => {
+            setLoadings((prevLoadings) => {
+                const newLoadings = [...prevLoadings];
+                newLoadings[index] = false;
+                return newLoadings;
+            });
+        }, 10000);
     };
 
     const columns: ColumnsType<any> = [
@@ -119,7 +151,6 @@ const AccountManagement = () => {
         }
     ];
 
-    //hook
 
     return (
         <>
@@ -138,8 +169,7 @@ const AccountManagement = () => {
                             defaultCurrent: 1,
                             pageSize: 10,
                             position: ['bottomCenter'],
-                            total: data.data.count   //count
-                            // current: page,
+                            total: data?.data?.count || 1,
                         }}
                     />
                 )}
@@ -158,11 +188,17 @@ const AccountManagement = () => {
                     <Form
                         labelCol={{ span: 6 }}
                         wrapperCol={{ span: 14 }}
+                        onFinish={handleAddAccount}
                         layout="horizontal"
                         style={{ maxWidth: 800 }}
                         labelAlign='left'
                     >
-                        <Form.Item label="Tên tài khoản" name='username'>
+                        <Form.Item
+                            label="Tên tài khoản"
+                            name='username'
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+
+                        >
                             <Input />
                         </Form.Item>
                         <Form.Item
@@ -172,45 +208,83 @@ const AccountManagement = () => {
                         >
                             <Input.Password />
                         </Form.Item>
-                        <Form.Item label="Select">
-                            <Select>
-                                <Select.Option value="demo">Demo</Select.Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item label="Số tướng">
+                        <Form.Item
+                            label="Số tướng"
+                            name='heroes_num'
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                        >
                             <InputNumber />
                         </Form.Item>
-                        <Form.Item label="Số trang phục">
+                        <Form.Item
+                            label="Số trang phục"
+                            name='costumes_num'
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                        >
                             <InputNumber />
                         </Form.Item>
-                        <Form.Item label='Rank' name="rank">
+                        <Form.Item
+                            label='Rank'
+                            name="rank"
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                        >
                             <Select
                                 allowClear
                             >
-                                <Option value="thachdau">Thách đấu</Option>
-                                <Option value="chientuong">Chiến tướng</Option>
-                                <Option value="caothu">Cao thủ</Option>
-                                <Option value="tinhanh">Tinh Anh</Option>
-                                <Option value="kimcuong">Kim Cương</Option>
-                                <Option value="bachkim">Bạch kim</Option>
-                                <Option value="vang">{'< '}Bạch kim</Option>
+                                <Option value="Thách đấu">Thách đấu</Option>
+                                <Option value="Chiến tướng">Chiến tướng</Option>
+                                <Option value="Cao thủ">Cao thủ</Option>
+                                <Option value="Tinh Anh">Tinh Anh</Option>
+                                <Option value="Kim Cương">Kim Cương</Option>
+                                <Option value="Bạch kim">Bạch kim</Option>
+                                <Option value="Vàng">{'< '}Bạch kim</Option>
                             </Select>
                         </Form.Item>
-                        <Form.Item label="Full tướng" name="disabled" valuePropName="checked">
+                        <Form.Item label="Full tướng" name="is_full_gems" valuePropName="checked">
                             <Checkbox></Checkbox>
                         </Form.Item>
-                        <Form.Item label="Giá" name='price'>
+                        <Form.Item
+                            label="Giá"
+                            name='price'
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                        >
                             <InputNumber />
                         </Form.Item>
-                        <Form.Item label="Ảnh profile" valuePropName="fileList">
-                            <Upload action="/upload.do" listType="picture-card">
+                        <Form.Item
+                            label='Ảnh profile'
+                            name='img'
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please uploade image'
+                                }
+                            ]}
+                        >
+                            <Upload
+                                name='img'
+                                listType="picture-card"
+                                beforeUpload={(file) => {
+                                    return new Promise((resolve, reject) => {
+                                        if (file.size > 2) {
+                                            reject('File size excceed')
+                                        } else {
+                                            resolve('success')
+                                        }
+                                    })
+                                }}
+                                maxCount={1}
+                            >
                                 <div>
                                     <PlusOutlined />
                                     <div style={{ marginTop: 8 }}>Upload</div>
                                 </div>
                             </Upload>
                         </Form.Item>
-                        <Button className='bg-[#1777ff] ml-[173px] text-white hover:text-white' htmlType='submit'>Thêm tài khoản</Button>
+                        <Button
+                            className='bg-[#1777ff] ml-[173px] text-white hover:text-white'
+                            htmlType='submit'
+                            onClick={() => enterLoading(0)}
+                        >Thêm tài khoản
+                        </Button>
                     </Form>
                 </Modal>) : ''}
         </>

@@ -2,9 +2,11 @@ import { Button, Table, Modal, message } from 'antd';
 import moment from 'moment';
 import userService from '../shared/services/user.service';
 import { ColumnsType } from 'antd/es/table'
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const UserManagement = () => {
+
+    const queryClient = useQueryClient()
 
     const { data, isLoading, isError } = useQuery<any>({
         queryKey: ['users'],
@@ -24,6 +26,7 @@ const UserManagement = () => {
         mutationFn: async (id: any) => userService.lockUser(id),
         onSuccess(data, variables, context) {
             message.success('Đã khoá tài khoản.')
+            queryClient.invalidateQueries({ queryKey: ['users'] })
         },
         onError(error, variables, context) {
             console.log(error)
@@ -35,6 +38,7 @@ const UserManagement = () => {
         mutationFn: async (id: any) => userService.unlockUser(id),
         onSuccess(data, variables, context) {
             message.success('Đã mở khoá tài khoản.')
+            queryClient.invalidateQueries({ queryKey: ['users'] })
         },
         onError(error, variables, context) {
             console.log(error)
@@ -94,7 +98,13 @@ const UserManagement = () => {
             title: 'Hành động',
             key: 'action',
             align: 'center',
-            render: (_, record) => <Button onClick={() => lockUser(record.id)} danger>Khoá tài khoản</Button>,
+            dataIndex: 'isLocked',
+            render: (_, record) => {
+                if (record.isLocked === 1) {
+                    return <Button onClick={() => unlockUser(record.id)} danger>Mở khoá tài khoản</Button>
+                } else
+                    return <Button onClick={() => lockUser(record.id)} danger>Khoá tài khoản</Button>
+            },
         }
     ];
 

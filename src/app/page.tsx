@@ -43,68 +43,66 @@ const Home = () => {
   if (verifyLogin.isLoading) return (<p>Loading...</p>)
 
 
-  if (verifyLogin.data?.status !== 200 || verifyLogin.isError) {
-    return setTimeout(() => { router.push('/login') }, 500)
+  if (((verifyLogin.data?.status !== 200) && (verifyLogin.data?.status !== 204)) || verifyLogin.isError) {
+    message.error('Unauthorized')
+    return router.push('/login')
+  } else {
+    const items: MenuProps['items'] = [
+      {
+        label: 'Quản lý người dùng',
+        key: 'user management',
+        icon: <UserOutlined />,
+      },
+      {
+        label: 'Quản lý tài khoản game',
+        key: 'account management',
+        icon: <ContactsOutlined />,
+      },
+      {
+        label: 'Quản lý yêu cầu mua tài khoản',
+        key: 'purchase management',
+        icon: <ShoppingCartOutlined />,
+      },
+      {
+        label: 'Quản lý yêu cầu bán tài khoản',
+        key: 'sell management',
+        icon: <RedEnvelopeOutlined />
+      },
+    ];
+
+    const onClick: MenuProps['onClick'] = (e) => {
+      setCurrent(e.key);
+    };
+
+    const renderContent = (current: string) => {
+      if (current === 'user management') return (<UserManagement />)
+      else if (current === 'account management') return (<AccountManagement />)
+      else if (current === 'purchase management') return (<PurchaseManagement />)
+    }
+
+    const handleLogout = () => {
+      localStorageService.cleanAll()
+      router.push('/login')
+      message.success('Đăng xuất thành công')
+    }
+
+    return (
+      <>
+        <div className='flex justify-end mt-10 mr-40'>
+          <Popover
+            className=''
+            content={<Button onClick={handleLogout}>Đăng xuất</Button>}
+          >
+            <Avatar size="large" icon={<UserOutlined />} />
+          </Popover>
+        </div>
+        <div className='mt-10'>
+          <Menu className='justify-center' onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />
+          {renderContent(current)}
+        </div>
+      </>
+    )
   }
-
-
-  const items: MenuProps['items'] = [
-    {
-      label: 'Quản lý người dùng',
-      key: 'user management',
-      icon: <UserOutlined />,
-    },
-    {
-      label: 'Quản lý tài khoản game',
-      key: 'account management',
-      icon: <ContactsOutlined />,
-    },
-    {
-      label: 'Quản lý yêu cầu mua tài khoản',
-      key: 'purchase management',
-      icon: <ShoppingCartOutlined />,
-    },
-    {
-      label: 'Quản lý yêu cầu bán tài khoản',
-      key: 'sell management',
-      icon: <RedEnvelopeOutlined />
-    },
-  ];
-
-
-
-  const onClick: MenuProps['onClick'] = (e) => {
-    setCurrent(e.key);
-  };
-
-  const renderContent = (current: string) => {
-    if (current === 'user management') return (<UserManagement />)
-    else if (current === 'account management') return (<AccountManagement />)
-    else if (current === 'purchase management') return (<PurchaseManagement />)
-  }
-
-  const handleLogout = () => {
-    localStorageService.cleanAll()
-    router.push('/login')
-    message.success('Đăng xuất thành công')
-  }
-
-  return (
-    <>
-      <div className='flex justify-end mt-10 mr-40'>
-        <Popover
-          className=''
-          content={<Button onClick={handleLogout}>Đăng xuất</Button>}
-        >
-          <Avatar size="large" icon={<UserOutlined />} />
-        </Popover>
-      </div>
-      <div className='mt-10'>
-        <Menu className='justify-center' onClick={onClick} selectedKeys={[current]} mode="horizontal" items={items} />
-        {renderContent(current)}
-      </div>
-    </>
-  )
 }
 
 export default Home
