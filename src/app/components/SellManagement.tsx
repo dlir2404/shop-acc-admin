@@ -1,14 +1,24 @@
 import { Button, Table, Image, Modal, message } from 'antd';
 import { EyeOutlined } from '@ant-design/icons'
-import { IPurchase } from '../shared/types/purchase.type';
 import moment from 'moment';
 import { ColumnsType } from 'antd/es/table'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import sellService from '../shared/services/sell.service';
+import { PlusOutlined } from '@ant-design/icons';
+import {
+    Form,
+    Input,
+    Upload,
+} from 'antd';
+import imgToUrl from '../shared/services/cloudinary.service';
+import { useState } from 'react';
 
 const SellManagement = () => {
 
     const queryClient = useQueryClient()
+    const [sellRequest, setSellRequest] = useState<any>(null)
+    const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
+    const [isCompleteLoading, setIsCompleteLoading] = useState(false)
 
     //api
     const { data, isLoading, isError } = useQuery<any>({
@@ -73,6 +83,7 @@ const SellManagement = () => {
             okType: 'danger',
             okText: 'Từ chối',
             closable: true,
+            maskClosable: true,
             onOk: () => {
                 denyRequestMutation.mutate(id)
             }
@@ -95,25 +106,8 @@ const SellManagement = () => {
                     </span>
                 </div>
             ),
-            onOk() { },
-        });
-    };
-
-    const payInfo = (account: any) => {
-        Modal.info({
-            title: 'Thông tin đăng nhập và thanh toán',
-            content: (
-                <div>
-                    <p className='py-2'>Tên đăng nhập: <strong>{account.username}</strong></p>
-                    <p className='py-2'>Mật khẩu: <strong>{account.password}</strong></p>
-                    <p className='py-2 inline-block mr-10'>QR code: </p>
-                    <span className='inline-block w-[100px]'>
-                        <Image src={account.payUrl}></Image>
-                    </span>
-                </div>
-            ),
             okType: 'default',
-            okText: 'Xác nhận đã chuyển tiền và thêm tài khoản',
+            maskClosable: true,
             onOk() { },
         });
     };
@@ -171,7 +165,11 @@ const SellManagement = () => {
                     )
                 } else if (record.status === 'Đã gửi thông tin thanh toán') {
                     return (
-                        <Button onClick={() => payInfo(record)}>Xem thông tin đăng nhập và thanh toán</Button>
+                        <Button
+                            onClick={() => {
+                                setSellRequest(record)
+                                setIsCompleteModalOpen(true)
+                            }}>Xem thông tin đăng nhập và thanh toán</Button>
                     )
                 } else {
                     return ''
@@ -180,6 +178,15 @@ const SellManagement = () => {
         }
     ];
 
+    const handleComplete = async (values: any) => {
+        let image_url = ''
+        const { img, ...body } = values
+        if (img.file) {
+            image_url = await imgToUrl(img.file)
+        }
+        body.billUrl = image_url
+        console.log('check: ', body)
+    }
 
     return (
         <>
@@ -199,6 +206,84 @@ const SellManagement = () => {
                         }}
                     />
                 )}
+                {isCompleteModalOpen ? (
+                    <Modal
+                        title="Thông tin đăng nhập và thanh toán"
+                        open={isCompleteModalOpen}
+                        onOk={handleComplete}
+                        footer={[
+                            <Button onClick={() => setIsCompleteModalOpen(false)} className=''>Huỷ</Button>
+                        ]}
+                        onCancel={() => setIsCompleteModalOpen(true)}
+                    >
+                        <div>
+                            <p className='py-2'>Tên đăng nhập: <strong>{sellRequest?.username}</strong></p>
+                            <p className='py-2'>Mật khẩu: <strong>{sellRequest?.password}</strong></p>
+                            <p className='py-2 inline-block mr-10'>QR code: </p>
+                            <span className='inline-block w-[100px]'>
+                                <Image src={sellRequest?.payUrl}></Image>
+                            </span>
+                            <div className='border-b-2 mt-6 w-full'></div>
+                            <div className='w-full text-center'>
+                                <p className='mt-4 mb-10 text-lg font-semibold'>Cập nhật mật khẩu và chuyển khoản</p>
+                            </div>
+                            <Form
+                                labelCol={{ span: 8 }}
+                                wrapperCol={{ span: 14 }}
+                                // onFinish={handleComplete}
+                                layout="horizontal"
+                                style={{ maxWidth: 800 }}
+                                labelAlign='left'
+                            >
+                                <Form.Item
+                                    label="Mật khẩu mới"
+                                    name="password"
+                                    rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                                <Form.Item
+                                    label='Bill chuyển khoản'
+                                    name='img'
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: 'Please uploade image'
+                                        }
+                                    ]}
+                                >
+                                    <Upload
+                                        name='img'
+                                        listType="picture-card"
+                                        beforeUpload={(file) => {
+                                            return new Promise((resolve, reject) => {
+                                                if (file.size > 2) {
+                                                    reject('File size excceed')
+                                                } else {
+                                                    resolve('success')
+                                                }
+                                            })
+                                        }}
+                                        maxCount={1}
+                                    >
+                                        <div>
+                                            <PlusOutlined />
+                                            <div style={{ marginTop: 8 }}>Upload</div>
+                                        </div>
+                                    </Upload>
+                                </Form.Item>
+                                <Button
+                                    className='ml-[140px]'
+                                    htmlType='submit'
+                                    loading={isCompleteLoading}
+                                    onClick={() => setIsCompleteLoading(true)}
+                                >
+                                    Xác nhận đã chuyển khoản và thêm tài khoản
+                                </Button>
+                            </Form>
+                        </div>
+                    </Modal>
+                ) : ''}
             </div>
         </>
     )
