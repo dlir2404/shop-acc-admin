@@ -45,6 +45,7 @@ const Home = () => {
 
 
   if (((verifyLogin.data?.status !== 200) && (verifyLogin.data?.status !== 204)) || verifyLogin.isError) {
+    console.log(((verifyLogin.data?.status !== 200) && (verifyLogin.data?.status !== 204)))
     message.error('Unauthorized')
     return router.push('/login')
   } else {
