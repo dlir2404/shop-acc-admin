@@ -69,6 +69,8 @@ const SellManagement = () => {
         },
         onSuccess(data, variables, context) {
             message.success('Đã xác nhận thanh toán và thêm tài khoản')
+            setIsCompleteLoading(false)
+            setIsCompleteModalOpen(false)
             queryClient.invalidateQueries({ queryKey: ['adminsells'] })
         },
         onError(error, variables, context) {
@@ -124,120 +126,6 @@ const SellManagement = () => {
         });
     };
 
-    const handlePayConfirm = async (id: any, values: any, resolve: any) => {
-        console.log(values)
-        let image_url = ''
-        const { img, ...body } = values
-        if (img.file) {
-            image_url = await imgToUrl(img.file)
-        }
-        body.image_url = image_url
-        confirmPayMutation.mutate({ id, body })
-        resolve()
-    }
-
-    const payConfirm = (account: any) => {
-        Modal.info({
-            title: 'Hoàn tất giao dịch',
-            closable: true,
-            content: (
-                <div>
-                    <Form
-                        form={form}
-                        labelCol={{ span: 10 }}
-                        wrapperCol={{ span: 20 }}
-                        layout="horizontal"
-                        style={{ maxWidth: 1000 }}
-                        labelAlign='left'
-                    >
-                        <Form.Item
-                            label="Mật khẩu mới"
-                            name="password"
-                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
-                        >
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item
-                            label="Nhập lại mật khẩu"
-                            name="passwordAgain"
-                            dependencies={['password']}
-                            rules={[{
-                                required: true,
-                                message: 'Nhập lại mật khẩu!',
-
-                            }, ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                    if (!value || getFieldValue('password') === value) {
-                                        return Promise.resolve();
-                                    }
-                                    return Promise.reject(new Error('Mật khẩu không khớp!'));
-                                },
-                            })]}
-                        >
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item
-                            label='Bill chuyển khoản'
-                            name='img'
-                            rules={[
-                                {
-                                    required: true,
-                                    message: 'Please uploade image'
-                                }
-                            ]}
-                        >
-                            <Upload
-                                name='img'
-                                listType="picture-card"
-                                beforeUpload={(file) => {
-                                    return new Promise((resolve, reject) => {
-                                        if (file.size > 2) {
-                                            reject('File size excceed')
-                                        } else {
-                                            resolve('success')
-                                        }
-                                    })
-                                }}
-                                maxCount={1}
-                            >
-                                <div>
-                                    <PlusOutlined />
-                                    <div style={{ marginTop: 8 }}>Upload</div>
-                                </div>
-                            </Upload>
-                        </Form.Item>
-                    </Form>
-                </div>
-            ),
-            okText: 'Xác nhận',
-            okType: 'default',
-            onOk() {
-                return new Promise((resolve, reject) => {
-                    handlePayConfirm(account.id, form.getFieldsValue(), resolve)
-                }).catch(() => console.log('Oops errors!'));
-            },
-        })
-    }
-
-    const payInfo = (account: any) => {
-        Modal.info({
-            title: 'Thông tin đăng nhập và thanh toán',
-            closable: true,
-            content: (
-                <div>
-                    <p className='py-2'>Tên đăng nhập: <strong>{account.username}</strong></p>
-                    <p className='py-2'>Mật khẩu: <strong>{account.password}</strong></p>
-                    <p className='py-2 inline-block mr-10'>QR code: </p>
-                    <span className='inline-block w-[100px]'>
-                        <Image src={account.payUrl}></Image>
-                    </span>
-                </div>
-            ),
-            okType: 'default',
-            okText: 'Xác nhận đã chuyển tiền và thêm tài khoản',
-            onOk() { payConfirm(account) },
-        });
-    };
 
     const columns: ColumnsType<any> = [
         {
@@ -294,6 +182,7 @@ const SellManagement = () => {
                     return (
                         <Button
                             onClick={() => {
+                                console.log(record)
                                 setSellRequest(record)
                                 setIsCompleteModalOpen(true)
                             }}>Xem thông tin đăng nhập và thanh toán</Button>
@@ -305,14 +194,15 @@ const SellManagement = () => {
         }
     ];
 
-    const handleComplete = async (values: any) => {
+    const handleComplete = async (id: any, values: any) => {
+        console.log(id)
         let image_url = ''
         const { img, ...body } = values
         if (img.file) {
             image_url = await imgToUrl(img.file)
         }
         body.billUrl = image_url
-        console.log('check: ', body)
+        confirmPayMutation.mutate({ id, body })
     }
 
     return (
@@ -337,7 +227,6 @@ const SellManagement = () => {
                     <Modal
                         title="Thông tin đăng nhập và thanh toán"
                         open={isCompleteModalOpen}
-                        onOk={handleComplete}
                         footer={[
                             <Button onClick={() => setIsCompleteModalOpen(false)} className=''>Huỷ</Button>
                         ]}
@@ -357,7 +246,7 @@ const SellManagement = () => {
                             <Form
                                 labelCol={{ span: 8 }}
                                 wrapperCol={{ span: 14 }}
-                                // onFinish={handleComplete}
+                                onFinish={(values) => handleComplete(sellRequest?.id, values)}
                                 layout="horizontal"
                                 style={{ maxWidth: 800 }}
                                 labelAlign='left'
