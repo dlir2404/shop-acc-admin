@@ -14,6 +14,10 @@ class SellService {
     async denySell(id: any) {
         return http.post('/api/admin/sell/deny-request/' + id)
     }
+
+    async confirmPay(id: any, values: any) {
+        return http.post('/api/admin/sell/confirm-pay/' + id, values)
+    }
 }
 
 const sellService = new SellService

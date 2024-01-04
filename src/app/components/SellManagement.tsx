@@ -1,14 +1,19 @@
-import { Button, Table, Image, Modal, message } from 'antd';
-import { EyeOutlined } from '@ant-design/icons'
-import { IPurchase } from '../shared/types/purchase.type';
+import { Button, Table, Image, Modal, message, Form, Input, Upload } from 'antd';
+import { EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import moment from 'moment';
 import { ColumnsType } from 'antd/es/table'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import sellService from '../shared/services/sell.service';
+import { useState } from 'react';
+import { useForm } from 'antd/es/form/Form';
+import imgToUrl from '../shared/services/cloudinary.service';
+
 
 const SellManagement = () => {
 
     const queryClient = useQueryClient()
+    const [isButtonLoading, setIsButtonLoading] = useState(false)
+    const [form] = useForm()
 
     //api
     const { data, isLoading, isError } = useQuery<any>({
@@ -54,6 +59,21 @@ const SellManagement = () => {
         },
     })
 
+    const confirmPayMutation = useMutation({
+        mutationFn: async ({ id, body }: { id: any, body: any }) => {
+            const response = await sellService.confirmPay(id, body)
+            return response
+        },
+        onSuccess(data, variables, context) {
+            message.success('Đã xác nhận thanh toán và thêm tài khoản')
+            queryClient.invalidateQueries({ queryKey: ['adminsells'] })
+        },
+        onError(error, variables, context) {
+            console.log(error)
+            message.error('Có lỗi xảy ra.')
+        },
+    })
+
     const confirmSell = (id: any) => {
         Modal.confirm({
             title: 'Bạn có chắc muốn chấp nhận yêu cầu bán này?',
@@ -82,6 +102,7 @@ const SellManagement = () => {
     const accountSellInfo = (account: any) => {
         Modal.info({
             title: 'Thông tin acc',
+            closable: true,
             content: (
                 <div>
                     <p className='py-2'>Số tướng: <strong>{account.heroes_num}</strong></p>
@@ -99,9 +120,105 @@ const SellManagement = () => {
         });
     };
 
+    const handlePayConfirm = async (id: any, values: any, resolve: any) => {
+        console.log(values)
+        let image_url = ''
+        const { img, ...body } = values
+        if (img.file) {
+            image_url = await imgToUrl(img.file)
+        }
+        body.image_url = image_url
+        confirmPayMutation.mutate({id, body})
+        resolve()
+    }
+
+    const payConfirm = (account: any) => {
+        Modal.info({
+            title: 'Hoàn tất giao dịch',
+            closable: true,
+            content: (
+                <div>
+                    <Form
+                        form={form}
+                        labelCol={{ span: 10 }}
+                        wrapperCol={{ span: 20 }}
+                        layout="horizontal"
+                        style={{ maxWidth: 1000 }}
+                        labelAlign='left'
+                    >
+                        <Form.Item
+                            label="Mật khẩu mới"
+                            name="password"
+                            rules={[{ required: true, message: 'Bạn chưa nhập trường này' }]}
+                        >
+                            <Input.Password />
+                        </Form.Item>
+                        <Form.Item
+                            label="Nhập lại mật khẩu"
+                            name="passwordAgain"
+                            dependencies={['password']}
+                            rules={[{
+                                required: true,
+                                message: 'Nhập lại mật khẩu!',
+
+                            }, ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('Mật khẩu không khớp!'));
+                                },
+                            })]}
+                        >
+                            <Input.Password />
+                        </Form.Item>
+                        <Form.Item
+                            label='Bill chuyển khoản'
+                            name='img'
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Please uploade image'
+                                }
+                            ]}
+                        >
+                            <Upload
+                                name='img'
+                                listType="picture-card"
+                                beforeUpload={(file) => {
+                                    return new Promise((resolve, reject) => {
+                                        if (file.size > 2) {
+                                            reject('File size excceed')
+                                        } else {
+                                            resolve('success')
+                                        }
+                                    })
+                                }}
+                                maxCount={1}
+                            >
+                                <div>
+                                    <PlusOutlined />
+                                    <div style={{ marginTop: 8 }}>Upload</div>
+                                </div>
+                            </Upload>
+                        </Form.Item>
+                    </Form>
+                </div>
+            ),
+            okText: 'Xác nhận',
+            okType: 'default',
+            onOk() {
+                return new Promise((resolve, reject) => {
+                    handlePayConfirm(account.id, form.getFieldsValue(), resolve)
+                }).catch(() => console.log('Oops errors!'));
+            },
+        })
+    }
+
     const payInfo = (account: any) => {
         Modal.info({
             title: 'Thông tin đăng nhập và thanh toán',
+            closable: true,
             content: (
                 <div>
                     <p className='py-2'>Tên đăng nhập: <strong>{account.username}</strong></p>
@@ -114,7 +231,7 @@ const SellManagement = () => {
             ),
             okType: 'default',
             okText: 'Xác nhận đã chuyển tiền và thêm tài khoản',
-            onOk() { },
+            onOk() { payConfirm(account) },
         });
     };
 
