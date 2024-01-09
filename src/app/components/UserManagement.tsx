@@ -56,7 +56,8 @@ const UserManagement = () => {
             okText: 'Khoá',
             onOk: () => {
                 lockUserMutation.mutate(id)
-            }
+            },
+            closable: true
         });
     };
 
@@ -68,7 +69,8 @@ const UserManagement = () => {
             okText: 'Mở khoá',
             onOk: () => {
                 unlockUserMutation.mutate(id)
-            }
+            },
+            closable: true
         });
     };
 

@@ -15,8 +15,6 @@ const SellManagement = () => {
     const [sellRequest, setSellRequest] = useState<any>(null)
     const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false)
     const [isCompleteLoading, setIsCompleteLoading] = useState(false)
-    const [isButtonLoading, setIsButtonLoading] = useState()
-    const [form] = useForm()
 
     //api
     const { data, isLoading, isError } = useQuery<any>({
@@ -83,7 +81,7 @@ const SellManagement = () => {
         Modal.confirm({
             title: 'Bạn có chắc muốn chấp nhận yêu cầu bán này?',
             content: 'Hành động này xác nhận rằng bạn đã chấp nhận thoả thuận bán này, tiếp đó người dùng sẽ gửi thông tin đăng nhập và thanh toán cho bạn.',
-            okType: 'primary',
+            okType: 'default',
             okText: 'Chấp nhận',
             onOk: () => {
                 acceptRequestMutation.mutate(id)
@@ -123,6 +121,7 @@ const SellManagement = () => {
                 </div>
             ),
             onOk() { },
+            okType: 'default'
         });
     };
 
@@ -195,14 +194,19 @@ const SellManagement = () => {
     ];
 
     const handleComplete = async (id: any, values: any) => {
-        console.log(id)
-        let image_url = ''
-        const { img, ...body } = values
-        if (img.file) {
-            image_url = await imgToUrl(img.file)
+        try {
+            console.log(id)
+            let image_url = ''
+            const { img, ...body } = values
+            setIsCompleteLoading(true)
+            if (img.file) {
+                image_url = await imgToUrl(img.file)
+            }
+            body.billUrl = image_url
+            confirmPayMutation.mutate({ id, body })
+        } catch (error) {
+            message.error('Có lỗi xảy ra')
         }
-        body.billUrl = image_url
-        confirmPayMutation.mutate({ id, body })
     }
 
     return (
@@ -292,7 +296,6 @@ const SellManagement = () => {
                                     className='ml-[140px]'
                                     htmlType='submit'
                                     loading={isCompleteLoading}
-                                    onClick={() => setIsCompleteLoading(true)}
                                 >
                                     Xác nhận đã chuyển khoản và thêm tài khoản
                                 </Button>

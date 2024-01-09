@@ -58,7 +58,7 @@ const PurchaseManagement = () => {
         Modal.confirm({
             title: 'Bạn có chắc muốn chấp nhận yêu cầu mua này?',
             content: 'Hành động này xác nhận rằng bạn đã nhận được tiền từ người mua, tài khoản và mật khẩu game liên quân sẽ được gửi tới người mua.',
-            okType: 'primary',
+            okType: 'default',
             okText: 'Chấp nhận',
             onOk: () => {
                 acceptRequestMutation.mutate(id)

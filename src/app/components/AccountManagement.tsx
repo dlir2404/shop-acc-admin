@@ -21,7 +21,7 @@ const AccountManagement = () => {
 
     const queryClient = useQueryClient()
     const [isModalAddOpen, setIsModalAddOpen] = useState(false)
-    const [loadings, setLoadings] = useState<boolean[]>([]);
+    const [loadings, setLoadings] = useState(false);
 
 
     //api
@@ -54,6 +54,7 @@ const AccountManagement = () => {
         onSuccess(data, variables, context) {
             message.success('Thêm tài khoản thành công')
             queryClient.invalidateQueries({ queryKey: ['adminaccounts'] })
+            setLoadings(false)
             setIsModalAddOpen(false)
         },
         onError(error: any) {
@@ -75,30 +76,19 @@ const AccountManagement = () => {
     };
 
     const handleAddAccount = async (values: any) => {
-        let image_url = ''
-        const { img, ...body } = values
-        if (img.file) {
-            image_url = await imgToUrl(img.file)
+        try {
+            let image_url = ''
+            const { img, ...body } = values
+            setLoadings(true)
+            if (img.file) {
+                image_url = await imgToUrl(img.file)
+            }
+            body.image_url = image_url
+            addMutation.mutate(body)
+        } catch (error) {
+            message.error('Có lỗi xảy ra')
         }
-        body.image_url = image_url
-        addMutation.mutate(body)
     }
-
-    const enterLoading = (index: number) => {
-        setLoadings((prevLoadings) => {
-            const newLoadings = [...prevLoadings];
-            newLoadings[index] = true;
-            return newLoadings;
-        });
-
-        setTimeout(() => {
-            setLoadings((prevLoadings) => {
-                const newLoadings = [...prevLoadings];
-                newLoadings[index] = false;
-                return newLoadings;
-            });
-        }, 10000);
-    };
 
     const columns: ColumnsType<any> = [
         {
@@ -276,7 +266,7 @@ const AccountManagement = () => {
                         <Button
                             className='bg-[#1777ff] ml-[173px] text-white hover:text-white'
                             htmlType='submit'
-                            onClick={() => enterLoading(0)}
+                            loading={loadings}
                         >Thêm tài khoản
                         </Button>
                     </Form>
